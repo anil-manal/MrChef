@@ -1,6 +1,4 @@
 // src/components/HeroSection.tsx
-import React from 'react';
-
 function HeroSection() {
   return (
     <div className="bg-gray-200 py-16 text-center">

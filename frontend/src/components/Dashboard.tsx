@@ -33,18 +33,19 @@ function Dashboard() {
         setTotalRecipes(statsData.recipeCount || 0);
 
         // Calculate the total number of recipe views
-        const totalViews = Object.values(statsData.recipeViews || {}).reduce((acc, views) => acc + views, 0);
+        const recipeViewsData = statsData.recipeViews || {};
+        const totalViews = Object.values(recipeViewsData).reduce<number>((acc, value) => acc + (value as number), 0);
         setTotalRecipeViews(totalViews);
 
         // Set recipeViews
-        setRecipeViews(statsData.recipeViews || {});
+        setRecipeViews(recipeViewsData);
 
         // Get and sort recipes by updatedAt
         const sortedRecipes = recipesResponse.data.sort((a: Recipe, b: Recipe) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
         setRecentRecipes(sortedRecipes.slice(0, 3));
 
-      } catch (error) {
-        console.error('Error fetching data:', error);
+      } catch (error: any) {
+        console.error('Error fetching data:', error.message || error);
       }
     };
 
@@ -70,6 +71,7 @@ function Dashboard() {
                 key={recipe._id}
                 title={recipe.title}
                 dateUpdated={recipe.updatedAt}
+                viewCount={recipeViews[recipe._id] || 0} // Display views for each recipe
               />
             ))
           ) : (
@@ -146,9 +148,10 @@ const EyeIcon: React.FC = (props) => (
 interface RecentRecipeCardProps {
   title: string;
   dateUpdated: string;
+  viewCount: number; // Added viewCount prop
 }
 
-const RecentRecipeCard: React.FC<RecentRecipeCardProps> = ({ title, dateUpdated }) => (
+const RecentRecipeCard: React.FC<RecentRecipeCardProps> = ({ title, dateUpdated, viewCount }) => (
   <div className="bg-white p-6 rounded-lg shadow-lg"
        style={{
          boxShadow: 'rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px',
@@ -156,6 +159,7 @@ const RecentRecipeCard: React.FC<RecentRecipeCardProps> = ({ title, dateUpdated 
     <div className="mb-4">
       <div className="text-2xl font-bold text-gray-800">{title}</div>
       <div className="text-sm text-gray-500 mt-1">Updated at: {new Date(dateUpdated).toLocaleDateString()}</div>
+      <div className="text-sm text-gray-500 mt-1">Views: {viewCount}</div> {/* Display view count */}
     </div>
   </div>
 );

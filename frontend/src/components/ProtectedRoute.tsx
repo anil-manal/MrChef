@@ -1,5 +1,4 @@
 // src/components/ProtectedRoute.tsx
-import React from 'react';
 import { Navigate } from 'react-router-dom';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {

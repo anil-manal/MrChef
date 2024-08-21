@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -46,8 +46,8 @@ function UpdateRecipe() {
         setInstructions(res.data.instructions);
         setLabels(res.data.labels);
         setMetadata(res.data.metadata);
-      } catch (err) {
-        console.error('Failed to fetch recipe:', err);
+      } catch (err: any) {
+        console.error('Failed to fetch recipe:', err.message || err);
         toast.error('Failed to fetch recipe details.');
       }
     };
@@ -60,202 +60,125 @@ function UpdateRecipe() {
     setIngredients(newIngredients);
   };
 
-  const handleAddIngredient = () => {
-    setIngredients([...ingredients, { name: '', quantity: '' }]);
-  };
-
-  const handleRemoveIngredient = (index: number) => {
-    setIngredients(ingredients.filter((_, i) => i !== index));
-  };
-
   const handleInstructionChange = (index: number, field: 'instruction' | 'description', value: string) => {
     const newInstructions = [...instructions];
     newInstructions[index] = { ...newInstructions[index], [field]: value };
     setInstructions(newInstructions);
   };
 
-  const handleAddInstruction = () => {
-    setInstructions([...instructions, { instruction: '', description: '' }]);
-  };
-
-  const handleRemoveInstruction = (index: number) => {
-    setInstructions(instructions.filter((_, i) => i !== index));
-  };
-
-  const handleLabelChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const label = event.target.value;
-    setLabels(prevLabels =>
-      event.target.checked
-        ? [...new Set([...prevLabels, label])]
-        : prevLabels.filter(l => l !== label)
-    );
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    // Ensure labels are unique
-    const uniqueLabels = Array.from(new Set(labels));
-
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('metadata', metadata);
-    uniqueLabels.forEach((label, index) => {
-      formData.append(`labels[${index}]`, label); // Store each label in a separate index
-    });
-    ingredients.forEach((ingredient, index) => {
-      formData.append(`ingredients[${index}][name]`, ingredient.name);
-      formData.append(`ingredients[${index}][quantity]`, ingredient.quantity);
-    });
-    instructions.forEach((instruction, index) => {
-      formData.append(`instructions[${index}][instruction]`, instruction.instruction);
-      formData.append(`instructions[${index}][description]`, instruction.description);
-    });
-
+  const handleUpdateRecipe = async () => {
     try {
-      const token = localStorage.getItem('token'); // Retrieve token
-      if (!token) {
-        throw new Error('No token found'); // Log if no token found
-      }
-
-      await axios.put(`http://localhost:5000/api/recipes/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`, // Send token
-        },
+      await axios.put(`http://localhost:5000/api/recipes/${id}`, {
+        title,
+        ingredients,
+        instructions,
+        labels,
+        metadata
       });
-
       toast.success('Recipe updated successfully!');
-      navigate('/recipes'); // Redirect to RecipeList page
-    } catch (error) {
-      console.error('Failed to update recipe:', error.response?.data || error.message);
-      toast.error('Failed to update recipe. Please try again.');
+      navigate('/admin/dashboard');
+    } catch (err: any) {
+      console.error('Failed to update recipe:', err.message || err);
+      toast.error('Failed to update recipe.');
     }
   };
 
-  if (!recipe) return <p>Loading...</p>;
+  if (!recipe) return <div>Loading...</div>;
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Update Recipe</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700">Title</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="border p-2 w-full"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Ingredients</label>
-          {ingredients.map((ingredient, index) => (
-            <div key={index} className="flex items-center mb-2 space-x-2">
-              <input
-                type="text"
-                value={ingredient.name}
-                onChange={(e) => handleIngredientChange(index, 'name', e.target.value)}
-                placeholder="Ingredient Name"
-                className="border p-2 flex-1"
-                required
-              />
-              <input
-                type="text"
-                value={ingredient.quantity}
-                onChange={(e) => handleIngredientChange(index, 'quantity', e.target.value)}
-                placeholder="Quantity"
-                className="border p-2 flex-1"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => handleRemoveIngredient(index)}
-                className="bg-red-500 text-white px-4 py-2 rounded"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={handleAddIngredient}
-            className="bg-blue-500 text-white p-2 rounded"
-          >
-            Add Ingredient
-          </button>
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Instructions</label>
-          {instructions.map((instruction, index) => (
-            <div key={index} className="flex items-center mb-2 space-x-2">
-              <input
-                type="text"
-                value={instruction.instruction}
-                onChange={(e) => handleInstructionChange(index, 'instruction', e.target.value)}
-                placeholder="Instruction"
-                className="border p-2 flex-1"
-                required
-              />
-              <input
-                type="text"
-                value={instruction.description}
-                onChange={(e) => handleInstructionChange(index, 'description', e.target.value)}
-                placeholder="Description"
-                className="border p-2 flex-1"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => handleRemoveInstruction(index)}
-                className="bg-red-500 text-white px-4 py-2 rounded"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={handleAddInstruction}
-            className="bg-blue-500 text-white p-2 rounded"
-          >
-            Add Instruction
-          </button>
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Labels</label>
-          {labelsOptions.map((label) => (
-            <div key={label} className="flex items-center mb-2">
-              <input
-                type="checkbox"
-                value={label}
-                checked={labels.includes(label)}
-                onChange={handleLabelChange}
-                className="mr-2"
-              />
-              <label className="text-gray-700">{label}</label>
-            </div>
-          ))}
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Metadata</label>
-          <input
-            type="text"
-            value={metadata}
-            onChange={(e) => setMetadata(e.target.value)}
-            className="border p-2 w-full"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="bg-green-500 text-white px-4 py-2 rounded"
-        >
-          Update Recipe
-        </button>
-      </form>
+    <div className="p-6 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Update Recipe</h1>
       <ToastContainer />
+
+      <div className="mb-4">
+        <label className="block mb-2 text-gray-700">Title</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="border p-2 w-full"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-2 text-gray-700">Ingredients</label>
+        {ingredients.map((ingredient, index) => (
+          <div key={index} className="flex mb-2">
+            <input
+              type="text"
+              value={ingredient.name}
+              onChange={(e) => handleIngredientChange(index, 'name', e.target.value)}
+              className="border p-2 w-1/2 mr-2"
+              placeholder="Ingredient name"
+            />
+            <input
+              type="text"
+              value={ingredient.quantity}
+              onChange={(e) => handleIngredientChange(index, 'quantity', e.target.value)}
+              className="border p-2 w-1/2"
+              placeholder="Quantity"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-2 text-gray-700">Instructions</label>
+        {instructions.map((instruction, index) => (
+          <div key={index} className="mb-4">
+            <input
+              type="text"
+              value={instruction.instruction}
+              onChange={(e) => handleInstructionChange(index, 'instruction', e.target.value)}
+              className="border p-2 w-full mb-2"
+              placeholder="Instruction"
+            />
+            <textarea
+              value={instruction.description}
+              onChange={(e) => handleInstructionChange(index, 'description', e.target.value)}
+              className="border p-2 w-full"
+              placeholder="Description"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-2 text-gray-700">Labels</label>
+        {labelsOptions.map((label) => (
+          <div key={label} className="inline-flex items-center mr-4">
+            <input
+              type="checkbox"
+              checked={labels.includes(label)}
+              onChange={() => {
+                setLabels((prevLabels) =>
+                  prevLabels.includes(label)
+                    ? prevLabels.filter((l) => l !== label)
+                    : [...prevLabels, label]
+                );
+              }}
+              className="mr-2"
+            />
+            {label}
+          </div>
+        ))}
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-2 text-gray-700">Metadata</label>
+        <textarea
+          value={metadata}
+          onChange={(e) => setMetadata(e.target.value)}
+          className="border p-2 w-full"
+        />
+      </div>
+
+      <button
+        onClick={handleUpdateRecipe}
+        className="bg-blue-600 text-white p-2 rounded"
+      >
+        Update Recipe
+      </button>
     </div>
   );
 }

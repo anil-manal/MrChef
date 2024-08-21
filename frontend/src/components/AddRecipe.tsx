@@ -70,7 +70,7 @@ function AddRecipe() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-  
+
     const formData = new FormData();
     formData.append('title', title);
     if (image) formData.append('image', image);
@@ -84,28 +84,32 @@ function AddRecipe() {
       formData.append(`instructions[${index}][instruction]`, instruction.instruction);
       formData.append(`instructions[${index}][description]`, instruction.description);
     });
-  
+
     try {
-      const token = localStorage.getItem('token'); // Retrieve token
+      const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No token found'); // Log if no token found
+        throw new Error('No token found');
       }
-  
-      const response = await axios.post('http://localhost:5000/api/recipes', formData, {
+
+      await axios.post('http://localhost:5000/api/recipes', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`, // Send token
+          Authorization: `Bearer ${token}`,
         },
       });
+
       toast.success('Recipe added successfully!');
       navigate('/admin/dashboard');
     } catch (error) {
-      console.error('Failed to add recipe:', error.response?.data || error.message);
-      console.error('Error details:', error); // Detailed error logging
+      if (axios.isAxiosError(error)) {
+        console.error('Failed to add recipe:', error.response?.data || error.message);
+      } else {
+        console.error('Failed to add recipe:', error);
+      }
       toast.error('Failed to add recipe. Please try again.');
     }
   };
-  
+
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Add Recipe</h2>
@@ -214,7 +218,7 @@ function AddRecipe() {
                 onChange={handleLabelChange}
                 className="mr-2"
               />
-              <label className="text-gray-700">{label}</label>
+              <span>{label}</span>
             </div>
           ))}
         </div>
@@ -225,13 +229,12 @@ function AddRecipe() {
             value={metadata}
             onChange={(e) => setMetadata(e.target.value)}
             className="border p-2 w-full"
-            maxLength={50} // Ensure metadata is limited to 50 characters
             required
           />
         </div>
         <button
           type="submit"
-          className="bg-blue-500 text-white p-2 rounded"
+          className="bg-green-500 text-white px-4 py-2 rounded"
         >
           Submit
         </button>

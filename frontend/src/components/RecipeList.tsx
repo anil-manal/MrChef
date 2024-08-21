@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -28,7 +28,11 @@ function RecipeList() {
           console.error('Unexpected response data:', res.data);
         }
       } catch (err) {
-        console.error('Failed to fetch recipes:', err.message || err);
+        if (axios.isAxiosError(err)) {
+          console.error('Failed to fetch recipes:', err.message || err);
+        } else {
+          console.error('Failed to fetch recipes:', err);
+        }
       }
     };
     fetchRecipes();
@@ -53,8 +57,13 @@ function RecipeList() {
       toast.success('Recipe deleted successfully');
       setRecipes(recipes.filter(recipe => recipe._id !== id)); // Remove deleted recipe from state
     } catch (error) {
-      console.error('Error:', error.message);
-      toast.error(`Failed to delete recipe: ${error.message}`);
+      if (error instanceof Error) {
+        console.error('Error:', error.message);
+        toast.error(`Failed to delete recipe: ${error.message}`);
+      } else {
+        console.error('Error:', error);
+        toast.error('Failed to delete recipe: An unknown error occurred');
+      }
     }
   };
   
